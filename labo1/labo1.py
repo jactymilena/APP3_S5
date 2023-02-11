@@ -4,45 +4,45 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def prob1_a_x1():
-    n = 20
-    t = np.arange(n)
+def fft_func(x, title='x[n]'):
+    # fft
+    ft = np.fft.fft(x)
 
-    x1 = np.sin((0.1 * math.pi * t) + (math.pi/4))
-    ft = np.fft.fft(x1)
-
+    # Amplitude and angle
     amp = np.abs(ft)
     ang = np.angle(ft)
 
-    # Representation
-    plt.stem(amp)
+    # Plot x[n]
+    plt.title(title)
+    plt.stem(x)
     plt.show()
-    plt.stem(ang)
+
+    # Plot Amplitude et angle
+    fig, axis = plt.subplots(2)
+
+    fig.suptitle(f"TFD({title})")
+    axis[0].stem(amp)
+    axis[0].set(ylabel='Amplitude')
+    axis[1].stem(ang)
+    axis[1].set(ylabel='Angle')
     plt.show()
-    plt.stem(x1)
-    plt.show()
+
+
+def prob1_a_x1():
+    N = 22
+    t = np.arange(N)
+    x1 = np.sin((0.1 * math.pi * t) + (math.pi/4))
+    fft_func(x1, 'x_1[n]')
 
 
 def prob1_a_x2():
     N = 11
     arr = np.array([1, -1])
-
     x2 = np.tile(arr, N)
-    ft = np.fft.fft(x2)
-
-    amp = np.abs(ft)
-    ang = np.angle(ft)
-
-    # Representation
-    plt.stem(x2)
-    plt.show()
-    plt.stem(amp)
-    plt.show()
-    plt.stem(ang)
-    plt.show()
+    fft_func(x2, 'x_2[n]')
 
 
 if __name__ == '__main__':
-    print('allooo')
+    print('Laboratoire 1')
     prob1_a_x1()
     prob1_a_x2()
