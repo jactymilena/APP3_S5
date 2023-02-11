@@ -5,20 +5,28 @@ import numpy as np
 from scipy.io.wavfile import read
 
 
-def fft_func(x, title='x[n]'):
-    ft = np.fft.fft(x)
-    freq = np.fft.fftfreq(len(x))
+def fft_func(signal, fs):
+    N = 32
+    fft_spect = np.fft.fft(signal)
+    freq = np.fft.fftfreq(signal.size, d=1./fs)
 
     # Amplitude and angle
-    amp = np.abs(ft)
+    amp_fft_spect = np.abs(fft_spect)
     # ang = np.angle(ft)
 
-    plt.plot(amp)
+    plt.plot(amp_fft_spect)
     plt.show()
 
-    plt.plot(freq, amp)
-    plt.xlim(0, 1)
+    plt.plot(freq, amp_fft_spect)
+    plt.xlim(0, 10000)
     plt.show()
+
+    ind = np.argpartition(amp_fft_spect, -N)[-N:]
+    for i in ind:
+        print(f"freq : {freq[i]}, amp : {amp_fft_spect[i]}")
+
+
+
 
     # Plot x[n]
     # plt.title(f"{title} N={N}")
@@ -37,12 +45,12 @@ def fft_func(x, title='x[n]'):
 
 
 def read_wave(filename):
-    input_data = read(filename)
-    return input_data[1]
+    samplerate, input_data = read(filename)
+    return samplerate, input_data
 
 
 if __name__ == '__main__':
-    x = read_wave("../sounds/note_guitare_LAd.wav")
+    samplerate, x = read_wave("../sounds/note_guitare_LAd.wav")
 
     plt.plot(x)
     plt.show()
@@ -51,7 +59,7 @@ if __name__ == '__main__':
     plt.show()
 
     N = 32
-    fft_func(x)
+    fft_func(x, samplerate)
 
     print('allooo')
     print("Bonjour ! ")
