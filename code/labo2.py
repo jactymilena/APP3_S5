@@ -9,7 +9,7 @@ def rep_impulsionnelle(fc, fe, N):
     n = np.arange(0 - (N / 2), (N / 2))
     m = N * (fc / fe)
     k = 2 * m + 1
-    add_padding = True
+    add_padding = False
     padding = 0 if add_padding is False else 50
 
     # Calcul reponse impulsionnelle
@@ -18,8 +18,6 @@ def rep_impulsionnelle(fc, fe, N):
 
     # fft, amplitude et phase
     hfft = np.fft.fft(h)
-    amp = np.abs(hfft)
-    ang = np.angle(hfft)
 
     h_db = [20 * np.log10(np.abs(x)) if x != 0 else 0 for x in hfft]
     w = [(i * 2 * math.pi) / (N + padding) for i in range(N + padding)]
@@ -37,17 +35,9 @@ def rep_impulsionnelle(fc, fe, N):
     plt.show()
 
     plt.title(f"Amplitude (N={N})")
-    # plt.stem(amp)
     plt.xlim(0, math.pi)
     plt.plot(w, h_db)
     plt.show()
-    plt.xlim(0, math.pi)
-
-    plt.title(f"Phase (N={N})")
-    # plt.stem(ang)
-    # plt.plot(ang)
-    # plt.show()
-
 
 def prob1():
     plt.close()
