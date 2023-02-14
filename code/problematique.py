@@ -27,6 +27,11 @@ def extract_parameters(signal, samplerate):
     phase_fft_spect = np.angle(fft_spect)   
     fft_freq = np.fft.rfftfreq(signal.size, d=1./samplerate)
 
+    w = [(i * 2 * math.pi) / (len(fft_spect)) for i in range(len(fft_spect))]
+
+    # plt.plot(w, 20*np.log10(amp_fft_spect))
+    # plt.show()
+
     # Reherche de la frequence fondamentale
     N = 32
     freq_fondamentale = get_freq_fondamenale(fft_spect, fft_freq)
@@ -42,6 +47,15 @@ def extract_parameters(signal, samplerate):
         harmoniques.append(fft_freq[idx])
         signal_amp.append(amp_fft_spect[idx])
         signal_phase.append(phase_fft_spect[idx])
+    
+    # np.savetxt("harmoniques.csv", harmoniques, delimiter=" ")
+    # np.savetxt("signal_amp.csv", signal_amp, delimiter=" ")
+    # np.savetxt("signal_phase.csv", signal_phase, delimiter=" ")
+
+
+    print(harmoniques)
+    print(signal_amp)
+    print(signal_phase)
     
     return harmoniques, signal_amp, signal_phase, freq_fondamentale
 
@@ -67,20 +81,16 @@ def find_rep_impul_order():
 def create_env_temp(wave):
     # N_h = find_rep_impul_order()
     N_h = 886
-    # coeff = np.multiply(np.ones(N_h), 1/N_h)
     coeff = np.full(N_h, 1/N_h)
 
-
     conv = np.convolve(coeff, np.abs(wave))
-
     conv = np.divide(conv, np.amax(conv))
-    plt.plot(conv)
-    plt.show()
+    # plt.plot(conv)
+    # plt.show()
 
     s = int((len(conv) - len(wave))/ 2) 
 
     return conv[s:len(conv) - s - 1]
-    # return conv[0: len(wave)]
 
 
 def create_octave_factors():
@@ -109,8 +119,8 @@ def create_beethoven_masterpiece(notes_signals):
                                 notes_signals['R'][:note_len*3]
                                ))
 
-    plt.plot(beethoven)
-    plt.show()
+    # plt.plot(beethoven)
+    # plt.show()
 
     return beethoven
 
@@ -122,13 +132,6 @@ def create_signal(harmoniques, arr_amp, arr_phase, env_temp, s_len, fs, fondamen
     for i, f in enumerate(harmoniques):
         y_sum += arr_amp[i]*np.sin(f *  2 * np.pi * t + arr_phase[i]) 
 
-    # y_sum = []
-    # for t in ts:
-    #     sum_total = 0;
-    #     for i, f in enumerate(harmoniques):
-    #         sum_total += arr_amp[i] * np.sin(2 * np.pi * f * t + arr_phase[i])
-
-    #     y_sum.append(sum_total)
     y_sum = np.divide(y_sum, np.max(y_sum))
     # plt.plot(y_sum)
     # plt.show()
@@ -188,9 +191,7 @@ def create_beethoven_from_lad():
     
     # Trouver l'enveloppe temporelle
     env_temp = create_env_temp(data)
-
     env_temp = np.divide(env_temp, np.amax(env_temp))
-
 
     # Creation du signal
     lad = create_signal(harmoniques, signal_amp, signal_phase, env_temp, len(signal), samplerate, freq_fondamentale) 
