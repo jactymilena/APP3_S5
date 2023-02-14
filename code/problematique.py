@@ -30,6 +30,9 @@ def extract_parameters(signal, samplerate):
 
     w = [(i * 2 * math.pi) / (len(fft_spect)) for i in range(len(fft_spect))]
 
+    # plt.plot(fft_freq, amp_fft_spect)
+    # plt.xlim(0, 20000)
+    # plt.show()
     # plt.plot(w, 20*np.log10(amp_fft_spect))
     # plt.show()
 
@@ -54,9 +57,9 @@ def extract_parameters(signal, samplerate):
     # np.savetxt("signal_phase.csv", signal_phase, delimiter=" ")
 
 
-    print(harmoniques)
-    print(signal_amp)
-    print(signal_phase)
+    # print(harmoniques)
+    # print(signal_amp)
+    # print(signal_phase)
     
     return harmoniques, signal_amp, signal_phase, freq_fondamentale
 
@@ -126,7 +129,7 @@ def create_beethoven_masterpiece(notes_signals):
     return beethoven
 
 
-def create_signal(harmoniques, arr_amp, arr_phase, env_temp, s_len, fs, fondamentale):
+def create_signal(harmoniques, arr_amp, arr_phase, env_temp, s_len, fs, fondamentale, plot=False):
     t = np.divide(np.arange(0, s_len), fs)
     y_sum = 0
     
@@ -137,7 +140,15 @@ def create_signal(harmoniques, arr_amp, arr_phase, env_temp, s_len, fs, fondamen
     # plt.plot(y_sum)
     # plt.show()
     # return np.array(y_sum)
-    return np.multiply(y_sum, env_temp)
+
+    new_sig = np.multiply(y_sum, env_temp)
+
+    # if plot:
+    #     plt.plot(t, np.fft.fft(np.abs(new_sig)))
+    #     plt.yscale('log')
+    #     plt.show()
+
+    return new_sig
 
 
 def create_note(signal, samplerate, filename):
@@ -182,8 +193,8 @@ def create_beethoven_from_lad():
     samplerate, data = read("sounds/note_guitare_LAd.wav")
     data = np.divide(data, np.max(data))
 
-    plt.plot(data)
-    plt.show()
+    # plt.plot(data)
+    # plt.show()
     # Fenetre de hamming
     signal =  hamming_win(data)
 
@@ -195,8 +206,23 @@ def create_beethoven_from_lad():
     env_temp = np.divide(env_temp, np.amax(env_temp))
 
     # Creation du signal
-    lad = create_signal(harmoniques, signal_amp, signal_phase, env_temp, len(signal), samplerate, freq_fondamentale) 
+    lad = create_signal(harmoniques, signal_amp, signal_phase, env_temp, len(signal), samplerate, freq_fondamentale, True) 
+
+    # plt.plot(lad)
+    # plt.stem(np.fft.rfftfreq(len(lad), d=1. / samplerate), 20*np.log10(np.abs(np.fft.rfft(lad))))
+    # plt.stem(np.fft.rfftfreq(len(lad), d=1. / samplerate), 20*np.log10(np.abs(lad)))
+    # plt.show()    
     
+    # Affichage de l'amplitude et la phase selon les 32 harmoniques retenues
+    fig, axis = plt.subplots(2)
+
+    fig.suptitle(f"Amplitude et phase du A# selon les 32 harmoniques retenues")
+    axis[0].stem(signal_amp)
+    axis[0].set(ylabel='Amplitude', yscale='log')
+    axis[1].stem(signal_phase)
+    axis[1].set(ylabel='Phase')
+    plt.show()
+
     create_note(lad, samplerate, 'A#')
 
     # Creation de toutes les notes
@@ -211,12 +237,18 @@ def create_beethoven_from_lad():
 
     # Create beethoven
     beethoven = create_beethoven_masterpiece(notes_signals)
+
+    # Affichage
+    plt.title("Beethoven")
+    plt.ylabel('Amplitude')
+    plt.plot(beethoven)
+    plt.show()
+
     create_note(beethoven, samplerate, 'beethoven')
 
 
 def filter_basson_1000Hz(read_filename, write_filename, plot=False):
     # Lecture du Basson
-    # fe, data = read("sounds/note_basson_plus_sinus_1000_Hz.wav")
     fe, data = read(f"sounds/{read_filename}.wav")
 
     # Appliquer une fenêtre de Hamming
@@ -297,8 +329,8 @@ def filter_basson_1000Hz(read_filename, write_filename, plot=False):
         # plt.show()
 
 if __name__ == '__main__':
-    # create_beethoven_from_lad()
-    filter_basson_1000Hz('note_basson_plus_sinus_1000_Hz','syntheseeewwwwe' , plot=True)
-    # filtered_filename = "basson-syntheseeewwwwe"
-    # filter_basson_1000Hz("note_basson_plus_sinus_1000_Hz", filtered_filename)
+    create_beethoven_from_lad()
+
+    # filtered_filename = "basson-synthese"
+    # filter_basson_1000Hz("note_basson_plus_sinus_1000_Hz", filtered_filename, True)
     # filter_basson_1000Hz(filtered_filename, filtered_filename)
