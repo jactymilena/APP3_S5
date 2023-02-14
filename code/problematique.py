@@ -65,17 +65,22 @@ def find_rep_impul_order():
 
 
 def create_env_temp(wave):
-    N_h = find_rep_impul_order()
-    coeff = np.multiply(np.ones(N_h), 1/N_h)
-    conv = np.convolve(np.abs(wave), coeff)
+    # N_h = find_rep_impul_order()
+    N_h = 886
+    # coeff = np.multiply(np.ones(N_h), 1/N_h)
+    coeff = np.full(N_h, 1/N_h)
 
+
+    conv = np.convolve(coeff, np.abs(wave))
+
+    conv = np.divide(conv, np.amax(conv))
     plt.plot(conv)
     plt.show()
 
     s = int((len(conv) - len(wave))/ 2) 
 
-    # return conv[s:len(conv) - s - 1]
-    return conv[0: len(wave)]
+    return conv[s:len(conv) - s - 1]
+    # return conv[0: len(wave)]
 
 
 def create_octave_factors():
@@ -92,8 +97,9 @@ def create_octave_factors():
 def create_beethoven_masterpiece(notes_signals):
     note_len = int(len(notes_signals['G']) / 6)
 
-    # beethoven = notes_signals['G'][:note_len]
+    # beethoven = notes_signals['G'][:note_len] il manque un G
     beethoven = np.concatenate((notes_signals['G'][:note_len], 
+                                notes_signals['G'][:note_len], 
                                 notes_signals['G'][:note_len],
                                 notes_signals['R#'][:note_len*3],
                                 np.zeros(note_len),
@@ -109,19 +115,29 @@ def create_beethoven_masterpiece(notes_signals):
     return beethoven
 
 
-def create_signal(harmoniques, arr_amp, arr_phase, env_temp, s_len, fs):
+def create_signal(harmoniques, arr_amp, arr_phase, env_temp, s_len, fs, fondamentale):
     t = np.divide(np.arange(0, s_len), fs)
     y_sum = 0
     
     for i, f in enumerate(harmoniques):
-        y_sum += arr_amp[i]*np.sin(f * 2 * np.pi * t + arr_phase[i]) 
-    
-    # return np.multiply(y_sum, env_temp)
-    return y_sum * env_temp
+        y_sum += arr_amp[i]*np.sin(f *  2 * np.pi * t + arr_phase[i]) 
+
+    # y_sum = []
+    # for t in ts:
+    #     sum_total = 0;
+    #     for i, f in enumerate(harmoniques):
+    #         sum_total += arr_amp[i] * np.sin(2 * np.pi * f * t + arr_phase[i])
+
+    #     y_sum.append(sum_total)
+    y_sum = np.divide(y_sum, np.max(y_sum))
+    # plt.plot(y_sum)
+    # plt.show()
+    # return np.array(y_sum)
+    return np.multiply(y_sum, env_temp)
 
 
 def create_note(signal, samplerate, filename):
-    write(f"sounds/notes/{filename}.wav", samplerate, signal.astype(np.int32))
+    write(f"sounds/notes/{filename}.wav", samplerate, signal)
 
 
 def create_basson_low_pass(N, fe, plot=False):
@@ -160,7 +176,10 @@ def transform_lp_to_cb(h_lp, N, n, w_0):
 def create_beethoven_from_lad():
     # Lecture du fichier
     samplerate, data = read("sounds/note_guitare_LAd.wav")
+    data = np.divide(data, np.max(data))
 
+    plt.plot(data)
+    plt.show()
     # Fenetre de hamming
     signal =  hamming_win(data)
 
@@ -170,8 +189,11 @@ def create_beethoven_from_lad():
     # Trouver l'enveloppe temporelle
     env_temp = create_env_temp(data)
 
+    env_temp = np.divide(env_temp, np.amax(env_temp))
+
+
     # Creation du signal
-    lad = create_signal(harmoniques, signal_amp, signal_phase, env_temp, len(signal), samplerate) 
+    lad = create_signal(harmoniques, signal_amp, signal_phase, env_temp, len(signal), samplerate, freq_fondamentale) 
     
     create_note(lad, samplerate, 'A#')
 
@@ -182,7 +204,7 @@ def create_beethoven_from_lad():
     for k in notes:
         factor = pow(2, notes[k] / 12)
         note_harmoniques = np.multiply(harmoniques, factor)
-        notes_signals[k] = create_signal(note_harmoniques, signal_amp, signal_phase, env_temp, len(signal), samplerate)
+        notes_signals[k] = create_signal(note_harmoniques, signal_amp, signal_phase, env_temp, len(signal), samplerate, freq_fondamentale)
         create_note(notes_signals[k], samplerate, k)
 
     # Create beethoven
