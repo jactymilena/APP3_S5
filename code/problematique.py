@@ -121,7 +121,7 @@ def create_note(signal, samplerate, filename):
 
 
 def create_beethoven_from_lad():
-        # Lecture du fichier
+    # Lecture du fichier
     samplerate, data = read("sounds/note_guitare_LAd.wav")
 
     # Fenetre de hamming
@@ -151,9 +151,85 @@ def create_beethoven_from_lad():
     # beethoven = create_beethoven_masterpiece(notes_signals)
     # create_note(beethoven, samplerate, 'beethoven')
 
+def create_basson_low_pass(N, fe, plot=False):
+    # Paramètres
+    fc_0 = 1000
+    fc_1 = 40
+    n = np.arange(0 - (N / 2), (N / 2))
+    m = (N * fc_1) / fe
+    k = (2 * m) + 1
+
+    # Normalisation des fréquences
+    w_0 = (2 * np.pi * fc_0) / fe
+    w_1 = (2 * np.pi * fc_1) / fe
+
+    # Réponse impulsionnelle du filtre passe-bas
+    h_lp = [1 / N * (np.sin(math.pi * n[i] * k / N) / np.sin(math.pi * n[i] / N)) if n[i] != 0 else k/N for i in range(N)]
+
+    # Representation Graphique
+    if plot:
+        plt.title(f"Réponse impulsionnelle h[n] (N={N})")
+        plt.plot(n, h_lp)
+        plt.show()
+
+    return h_lp, n, w_0 
+
+
+def filter_basson_1000Hz(read_filename, write_filename):
+    # Lecture du Basson
+    # fe, data = read("sounds/note_basson_plus_sinus_1000_Hz.wav")
+    fe, data = read(f"sounds/{read_filename}.wav")
+
+
+    # Appliquer une fenêtre de Hamming
+    basson_window = np.hamming(len(data)) * data 
+
+    # Affichage
+    plt.plot(basson_window)
+    plt.show()
+
+    N = 6000
+    h_lp, n, w_0 = create_basson_low_pass(N, fe)
+
+    # FFT du filtre passe-bas et transformation en dB
+    hfft_pb = np.fft.fft(h_lp)
+    h_db = 20 * np.log10(np.abs(hfft_pb)) 
+
+    # Passe-bas -> Coupe-Bande
+    h_cb = []
+    for i in range(N):
+        delta = 1 if(n[i] == 0) else 0
+        h_cb.append(delta - np.multiply(2 * h_lp[i], np.cos(w_0 * n[i])))
+
+    # fft du coupe bande pour afficher la frequence coupé
+    cb_freq = np.fft.rfftfreq(len(h_cb), d=1./fe)
+    hfft_cb = np.fft.rfft(h_cb)
+
+    # Convolution du basson origine avec le filtre coupe-bande
+    basson_synthese = np.convolve(basson_window, h_cb)
+
+    # Création du nouveau basson
+    write(f"sounds/{write_filename}.wav", fe, basson_synthese.astype(np.int16))
+
+    # Affichage du basson de synthèse
+    plt.title("Basson de synthèse")
+    plt.plot(basson_synthese)
+    plt.show() 
+
+    # Graphique
+    plt.title(f"Réponse impulsionnelle du Coupe-bande(N={N})")
+    plt.plot(n,h_cb)
+    plt.xlim([-5000, 1000])
+    plt.show() 
+
+    plt.title(f"Reponse en frequences du Coupe-bande(N={N})")
+    plt.plot(cb_freq[:500], np.abs(hfft_cb[:500]))
+    plt.show() 
+
 
 if __name__ == '__main__':
-    create_beethoven_from_lad()
-
-
+    # create_beethoven_from_lad()
+    filtered_filename = "basson-synthese"
+    filter_basson_1000Hz("note_basson_plus_sinus_1000_Hz", "basson-synthese")
+    filter_basson_1000Hz(filtered_filename, filtered_filename)
 
