@@ -3,6 +3,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.io.wavfile import read, write
+from scipy import signal as sg
 
 
 def hamming_win(wave):
@@ -243,27 +244,61 @@ def filter_basson_1000Hz(read_filename, write_filename, plot=False):
 
     if plot:
         # Affichage
-        plt.plot(basson_window)
-        plt.show()
+        # plt.plot(basson_window)
+        # plt.show()
 
         # Affichage du basson de synthèse
-        plt.title("Basson de synthèse")
-        plt.plot(basson_synthese)
-        plt.show() 
+        # plt.title("Basson de synthèse")
+        # plt.plot(basson_synthese)
+        # plt.show() 
 
         # Graphique
-        plt.title(f"Réponse impulsionnelle du Coupe-bande(N={N})")
-        plt.plot(n,h_cb)
-        plt.xlim([-5000, 1000])
-        plt.show() 
+        # plt.title(f"Réponse impulsionnelle du Coupe-bande(N={N})")
+        # plt.stem(n,h_cb)
+        # # plt.xlim([-5000, 1000])
+        # plt.xlabel('éch. [n]')
+        # plt.ylabel('Amplitude')
+        # plt.show() 
 
-        plt.title(f"Reponse en frequences du Coupe-bande(N={N})")
+        plt.title(f"Réponse à une sinusoïde de 1000Hz")
         plt.plot(cb_freq[:500], np.abs(hfft_cb[:500]))
+        plt.xlabel('Fréquences (Hz)')
+        plt.ylabel('Amplitude')
         plt.show() 
 
+        # w1, amp1 = sg.freqz(h_cb)
+        # fig, ax1 = plt.subplots()
+        # ax1.set_title('Amplitude et phase de la réponse en fréquence du coupe-bande')
+        # ax1.plot(w1, 20 * np.log10(abs(amp1)), 'r')
+        # ax1.set_xlabel('Fréquence (rad/éch.)')
+        # ax1.set_ylabel('Amplitude (dB)', color='r')
+
+        # ax2 = ax1.twinx()
+        # angles = np.unwrap(np.angle(amp1))
+        # ax2.plot(w1, angles, 'b')
+        # ax2.set_ylabel('Angle (rad)', color='b')
+        # plt.show()
+    
+        #amplitude et phase du coupe-bande
+        # amplitude_fft_spect_coupe_bande = np.abs(hfft_cb)
+        # phase_fft_spect_coupe_bande  = np.angle(hfft_cb)
+
+        # # plt.stem(cb_freq, phase_fft_spect_coupe_bande)
+        # plt.plot(cb_freq, phase_fft_spect_coupe_bande)
+        # plt.title(f"Phase de la réponse en fréquence du coupe-bande")
+        # plt.xlim(0, 2000
+        # 0)
+        # plt.show()
+
+        # plt.stem(cb_freq, amplitude_fft_spect_coupe_bande)
+        # # plt.plot(cb_freq, amplitude_fft_spect_coupe_bande)
+        # plt.title(f"Amplitude de la réponse en fréquence du coupe-bande")
+        # # plt.xlim(900, 1500)
+        # plt.show()
 
 if __name__ == '__main__':
-    create_beethoven_from_lad()
+    # create_beethoven_from_lad()
+    filter_basson_1000Hz('note_basson_plus_sinus_1000_Hz','syntheseeewwwwe' , plot=True)
     # filtered_filename = "basson-syntheseeewwwwe"
     # filter_basson_1000Hz("note_basson_plus_sinus_1000_Hz", filtered_filename)
     # filter_basson_1000Hz(filtered_filename, filtered_filename)
