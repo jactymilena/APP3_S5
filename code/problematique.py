@@ -43,7 +43,7 @@ def extract_parameters(signal, samplerate):
         signal_amp.append(amp_fft_spect[idx])
         signal_phase.append(phase_fft_spect[idx])
     
-    return harmoniques, signal_amp, signal_phase
+    return harmoniques, signal_amp, signal_phase, freq_fondamentale
 
 
 def find_rep_impul_order():
@@ -92,15 +92,19 @@ def create_octave_factors():
 def create_beethoven_masterpiece(notes_signals):
     note_len = int(len(notes_signals['G']) / 6)
 
-    beethoven = notes_signals['G'][:note_len]
-    beethoven = np.concatenate((beethoven, notes_signals['G'][:note_len]))
-    beethoven = np.concatenate((beethoven, notes_signals['G'][:note_len]))
-    beethoven = np.concatenate((beethoven, notes_signals['R#'][:note_len]))
-    # manque silence
-    beethoven = np.concatenate((beethoven, notes_signals['F'][:note_len]))
-    beethoven = np.concatenate((beethoven, notes_signals['F'][:note_len]))
-    beethoven = np.concatenate((beethoven, notes_signals['F'][:note_len]))
-    beethoven = np.concatenate((beethoven, notes_signals['R'][:note_len]))
+    # beethoven = notes_signals['G'][:note_len]
+    beethoven = np.concatenate((notes_signals['G'][:note_len], 
+                                notes_signals['G'][:note_len],
+                                notes_signals['R#'][:note_len*3],
+                                np.zeros(note_len),
+                                notes_signals['F'][:note_len],
+                                notes_signals['F'][:note_len],
+                                notes_signals['F'][:note_len],
+                                notes_signals['R'][:note_len*3]
+                               ))
+
+    plt.plot(beethoven)
+    plt.show()
 
     return beethoven
 
@@ -112,44 +116,12 @@ def create_signal(harmoniques, arr_amp, arr_phase, env_temp, s_len, fs):
     for i, f in enumerate(harmoniques):
         y_sum += arr_amp[i]*np.sin(f * 2 * np.pi * t + arr_phase[i]) 
     
-    return np.multiply(y_sum, env_temp)
-    # return y_sum
+    # return np.multiply(y_sum, env_temp)
+    return y_sum * env_temp
 
 
 def create_note(signal, samplerate, filename):
     write(f"sounds/notes/{filename}.wav", samplerate, signal.astype(np.int32))
-
-
-def create_beethoven_from_lad():
-    # Lecture du fichier
-    samplerate, data = read("sounds/note_guitare_LAd.wav")
-
-    # Fenetre de hamming
-    signal =  hamming_win(data)
-
-    # Extract frequence, amplitude and phase
-    harmoniques, signal_amp, signal_phase = extract_parameters(signal, samplerate)
-    
-    # Trouver l'enveloppe temporelle
-    env_temp = create_env_temp(data)
-
-    # Creation du signal
-    lad = create_signal(harmoniques, signal_amp, signal_phase, env_temp, len(signal), samplerate) 
-    
-    create_note(lad, samplerate, 'A#')
-
-    # Creation de toutes les notes
-    notes = create_octave_factors()
-
-    # notes_signals = {}
-    # for k in notes:
-    #     facteur = pow(2, notes[k] / 12)
-    #     note_harmoniques = np.multiply(harmoniques, facteur)
-    #     notes_signals[k] = create_signal(note_harmoniques, signal_amp, signal_phase, env_temp, len(signal), samplerate)
-
-    # # Create beethoven
-    # beethoven = create_beethoven_masterpiece(notes_signals)
-    # create_note(beethoven, samplerate, 'beethoven')
 
 
 def create_basson_low_pass(N, fe, plot=False):
@@ -183,6 +155,39 @@ def transform_lp_to_cb(h_lp, N, n, w_0):
         h_cb.append(delta - np.multiply(2 * h_lp[i], np.cos(w_0 * n[i])))
 
     return h_cb
+
+
+def create_beethoven_from_lad():
+    # Lecture du fichier
+    samplerate, data = read("sounds/note_guitare_LAd.wav")
+
+    # Fenetre de hamming
+    signal =  hamming_win(data)
+
+    # Extract frequence, amplitude and phase
+    harmoniques, signal_amp, signal_phase, freq_fondamentale = extract_parameters(signal, samplerate)
+    
+    # Trouver l'enveloppe temporelle
+    env_temp = create_env_temp(data)
+
+    # Creation du signal
+    lad = create_signal(harmoniques, signal_amp, signal_phase, env_temp, len(signal), samplerate) 
+    
+    create_note(lad, samplerate, 'A#')
+
+    # Creation de toutes les notes
+    notes = create_octave_factors()
+
+    notes_signals = {}
+    for k in notes:
+        factor = pow(2, notes[k] / 12)
+        note_harmoniques = np.multiply(harmoniques, factor)
+        notes_signals[k] = create_signal(note_harmoniques, signal_amp, signal_phase, env_temp, len(signal), samplerate)
+        create_note(notes_signals[k], samplerate, k)
+
+    # Create beethoven
+    beethoven = create_beethoven_masterpiece(notes_signals)
+    create_note(beethoven, samplerate, 'beethoven')
 
 
 def filter_basson_1000Hz(read_filename, write_filename, plot=False):
@@ -235,7 +240,7 @@ def filter_basson_1000Hz(read_filename, write_filename, plot=False):
 
 
 if __name__ == '__main__':
-    # create_beethoven_from_lad()
-    filtered_filename = "basson-syntheseeewwwwe"
-    filter_basson_1000Hz("note_basson_plus_sinus_1000_Hz", filtered_filename)
-    filter_basson_1000Hz(filtered_filename, filtered_filename)
+    create_beethoven_from_lad()
+    # filtered_filename = "basson-syntheseeewwwwe"
+    # filter_basson_1000Hz("note_basson_plus_sinus_1000_Hz", filtered_filename)
+    # filter_basson_1000Hz(filtered_filename, filtered_filename)
